@@ -23,21 +23,22 @@ data = pd.read_csv("data.csv")
 tdata=data.copy()
 data.drop(columns=['customerID'])
 # transform data
-numerical_feature = {feature for feature in data.columns if data[feature].dtypes != 'O'}
+data['TotalCharges'] = pd.to_numeric(data['TotalCharges'], errors='coerce')
 # print(f'Count of Numerical feature: {len(numerical_feature)}')
 # print(f'Numerical feature are:\n {numerical_feature}')
 categorical_feature = {feature for feature in data.columns if data[feature].dtypes == 'O'}
 # print(f'Count of Categorical feature: {len(categorical_feature)}')
-print(f'Categorical feature are:\n {categorical_feature}')
+# print(f'Categorical feature are:\n {categorical_feature}')
 
-print(data);
+# print(data);
 encoder = LabelEncoder()
 # fit encoder with data
 for feature in categorical_feature:
     data[feature] = encoder.fit_transform(data[feature])
 print(encoder.classes_)
-print(data);
+# print(data);
 # start to train with knn
+data.TotalCharges = data.TotalCharges.fillna(data.TotalCharges.mean())
 X_train=data.drop(['Churn'],axis=1)
 y_train=data['Churn']
 X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
@@ -49,6 +50,10 @@ y_pred=knn.predict(X_test)
 print(confusion_matrix(y_test,y_pred))
 print(classification_report(y_test,y_pred))
 print(accuracy_score(y_test,y_pred))
+print("the size of the knn is:")
+print(knn.__sizeof__())
+for i in data.columns:
+    print(i+str(data[i][0]));
 class main_container(App):
     qustlist =[["Female","Male"],["1","0"],["Yes","No"],["Yes","No"],["0","1"],["Yes","No"],["Yes","No","No phone service"],["DSL","Fiber optic","No"],["Yes","No","No internet service"],["Yes","No","No internet service"],["Yes","No","No internet service"],["Yes","No","No internet service"],["Yes","No","No internet service"],["Yes","No","No internet service"],["Month-to-month","One year","Two year"],["Yes","No"],["Electronic check","Credit card (automatic)","Bank transfer (automatic)","Mailed check"],["0","1"],["0","1"]]
 
@@ -75,12 +80,14 @@ class main_container(App):
             mainContainer.append(self.tmplabel[i])
             mainContainer.append(self.tmp[i])
         # add a button
+        self.ans=gui.Label("", width=200, height=30)
         mainContainer.append(self.btn)
+        mainContainer.append(self.ans)
         self.btn.onclick.do(self.on_button_pressed)
         return mainContainer
     def on_button_pressed(self, widget):
         global encoder;
-        test_dd=["123"];
+        test_dd=["5375"];
         for i in range(len(self.qustlist)):
             if(self.tmp[i].get_value()==None or self.tmp[i].get_value() == ""):
                 test_dd.append(self.qustlist[i][0])
@@ -97,15 +104,19 @@ class main_container(App):
         # print(categorical_feature);
         for feature in categorical_feature:
             if(feature=="Churn" or feature=="customerID" or feature=="tenure" or feature=="MonthlyCharges" or feature=="TotalCharges"):
-                continue
-            # print(tdata[feature]);
-            encoder.fit(tdata[feature])
-            test_dd[feature] = encoder.transform(test_dd[feature])
+                continue;
+            else:# print(tdata[feature]);
+                encoder.fit(tdata[feature])
+                test_dd[feature] = encoder.transform(test_dd[feature])
         # # print(test_dd);
         for i in test_dd.columns:
-            print(i+" : "+str(test_dd[i]))
+            print(i+str(test_dd[i][0]));
+        print(i+" : "+str(test_dd[i]))
         Y_pred=pd.DataFrame(knn.predict(test_dd))
         # Y_pred=knn.predict(test_dd)
-        print(Y_pred)
+        if Y_pred[0][0]==1:
+            self.ans.set_text("Yes")
+        else: 
+            self.ans.set_text("No")
         # print(data);
 start(main_container);
